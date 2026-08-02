@@ -8,6 +8,8 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
 
     steps:
       - name: Checkout Code
@@ -32,19 +34,30 @@ jobs:
           chmod +x build.sh
           ./build.sh
 
-      - name: Compute Checksum for Provisioning JSON
+      - name: Locate and Process APK
         run: |
-          APK_PATH=$(find bazel-bin -name "*.apk" | head -n 1)
-          echo "APK File Found at: $APK_PATH"
-          RAW_SHA256=$(sha256sum $APK_PATH | awk '{print $1}')
-          URL_SAFE_BASE64=$(echo -n $RAW_SHA256 | xxd -r -p | base64 | tr '+/' '-_' | tr -d '=')
-          echo "=================================================="
-          echo "YOUR PROVISIONING SIGNATURE CHECKSUM IS:"
-          echo "$URL_SAFE_BASE64"
-          echo "=================================================="
+          # البحث داخل الوصلات الرمزية عن ملف الـ APK النهائي
+          APK_PATH=$(find -L . -name "*.apk" | grep -v "unsigned" | head -n 1)
+          echo "Found APK at: $APK_PATH"
+          
+          if [ -f "$APK_PATH" ]; then
+            cp "$APK_PATH" ./testdpc_custom.apk
+            RAW_SHA256=$(sha256sum ./testdpc_custom.apk | awk '{print $1}')
+            URL_SAFE_BASE64=$(echo -n "$RAW_SHA256" | xxd -r -p | base64 | tr '+/' '-_' | tr -d '=')
+            echo "=================================================="
+            echo "REAL PROVISIONING SIGNATURE CHECKSUM IS:"
+            echo "$URL_SAFE_BASE64"
+            echo "=================================================="
+          else
+            echo "ERROR: APK file not found!"
+            exit 1
+          fi
 
-      - name: Upload Built APK Artifact
-        uses: actions/upload-artifact@v4
+      - name: Create Public GitHub Release
+        uses: softprops/action-gh-release@v2
         with:
-          name: TestDPC-Custom-APK
-          path: bazel-bin/*.apk
+          tag_name: v1.0.${{ github.run_number }}
+          name: Release TestDPC Custom v1.0.${{ github.run_number }}
+          files: ./testdpc_custom.apk
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
