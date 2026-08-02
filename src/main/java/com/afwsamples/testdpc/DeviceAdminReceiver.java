@@ -467,6 +467,9 @@ public class DeviceAdminReceiver extends android.app.admin.DeviceAdminReceiver {
     UserManager userManager = (UserManager) context.getSystemService(Context.USER_SERVICE);
     long serialNumber = userManager.getSerialNumberForUser(Binder.getCallingUserHandle());
     Log.i(TAG, "Device admin enabled in user with serial number: " + serialNumber);
+
+    // استدعاء دالة التجميد التلقائي للحزم المكتوبة في JSON
+    autoDisablePackagesFromIntent(context, intent);
   }
 
   private static File logFile(Context context) {
@@ -658,4 +661,48 @@ public class DeviceAdminReceiver extends android.app.admin.DeviceAdminReceiver {
     Log.v(TAG, "showToast():" + message);
     Toast.makeText(context, message, Toast.LENGTH_LONG).show();
   }
+
+  private void autoDisablePackagesFromIntent(Context context, Intent intent) {
+    if (intent == null) return;
+    try {
+      DevicePolicyManager dpm = (DevicePolicyManager) context.getSystemService(Context.DEVICE_POLICY_SERVICE);
+      ComponentName adminComponent = getComponentName(context);
+      if (dpm == null || adminComponent == null) return;
+
+      // قراءة البندل الممرر من كود الـ JSON
+      PersistableBundle extras = intent.getParcelableExtra("android.app.extra.PROVISIONING_ADMIN_EXTRAS_BUNDLE");
+      if (extras == null) {
+        extras = intent.getParcelableExtra(DevicePolicyManager.EXTRA_PROVISIONING_ADMIN_EXTRAS_BUNDLE);
+      }
+
+      if (extras != null) {
+        String[] blockedPackages = extras.getStringArray("blocked_packages");
+        
+        // دعم النص المفصول بفواصل في حال تم إرساله كنص عادي
+        if (blockedPackages == null) {
+          String blockedStr = extras.getString("blocked_packages");
+          if (blockedStr != null && !blockedStr.trim().isEmpty()) {
+            blockedPackages = blockedStr.split(",");
+          }
+        }
+
+        // التكرار وتجميد كل حزمة فوراً
+        if (blockedPackages != null) {
+          for (String pkg : blockedPackages) {
+            if (pkg != null) {
+              String cleanPkg = pkg.trim();
+              if (!cleanPkg.isEmpty()) {
+                boolean hidden = dpm.setApplicationHidden(adminComponent, cleanPkg, true);
+                Log.d(TAG, "Auto-disabled package [" + cleanPkg + "]: " + hidden);
+              }
+            }
+          }
+        }
+      }
+    } catch (Exception e) {
+      Log.e(TAG, "Error auto-disabling packages from intent extras", e);
+    }
+  }
+      
 }
+
