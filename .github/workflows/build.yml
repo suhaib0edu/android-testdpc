@@ -1,0 +1,50 @@
+name: Build TestDPC APK
+
+on:
+  push:
+    branches: [ "master", "main" ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Java JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install Bazel
+        uses: bazelbuild/setup-bazel@v5
+        with:
+          bazel-version: 7.x
+
+      - name: Build APK with Bazel
+        run: |
+          chmod +x build.sh
+          ./build.sh
+
+      - name: Compute Checksum for Provisioning JSON
+        run: |
+          APK_PATH=$(find bazel-bin -name "*.apk" | head -n 1)
+          echo "APK File Found at: $APK_PATH"
+          RAW_SHA256=$(sha256sum $APK_PATH | awk '{print $1}')
+          URL_SAFE_BASE64=$(echo -n $RAW_SHA256 | xxd -r -p | base64 | tr '+/' '-_' | tr -d '=')
+          echo "=================================================="
+          echo "YOUR PROVISIONING SIGNATURE CHECKSUM IS:"
+          echo "$URL_SAFE_BASE64"
+          echo "=================================================="
+
+      - name: Upload Built APK Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: TestDPC-Custom-APK
+          path: bazel-bin/*.apk
