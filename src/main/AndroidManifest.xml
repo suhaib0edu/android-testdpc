@@ -153,6 +153,15 @@
                 android:exported="true"
                 android:permission="android.permission.BIND_DEVICE_ADMIN"
                 android:theme="@style/DpcLoginTheme">
+        </activity>
+
+        <!-- Added: shown first so we can confirm the app actually launched before any
+             provisioning logic runs. Registers the GET_PROVISIONING_MODE filter instead of
+             GetProvisioningModeActivity, and forwards to it once the user taps Continue. -->
+        <activity android:name=".provision.ConfirmationActivity"
+                android:exported="true"
+                android:permission="android.permission.BIND_DEVICE_ADMIN"
+                android:theme="@style/DpcLoginTheme">
             <intent-filter>
                 <action android:name="android.app.action.GET_PROVISIONING_MODE" />
                 <category android:name="android.intent.category.DEFAULT"/>
