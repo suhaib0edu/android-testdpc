@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:gravity="center"
+    android:padding="32dp"
+    android:background="#FFFFFF">
+
+    <TextView
+        android:id="@+id/confirmation_title"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="✅ هذه هي الشاشة المُضافة"
+        android:textStyle="bold"
+        android:textSize="22sp"
+        android:textAlignment="center"
+        android:layout_marginBottom="16dp"/>
+
+    <TextView
+        android:id="@+id/confirmation_message"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="التطبيق تم تشغيله بنجاح عبر QR Provisioning.\nلم يتم تنفيذ أي منطق فعلي بعد.\n\nاضغط المتابعة لبدء التنفيذ الحقيقي (اختيار وضع الإدارة والمتابعة في عملية الإعداد)."
+        android:textSize="16sp"
+        android:textAlignment="center"
+        android:layout_marginBottom="32dp"/>
+
+    <Button
+        android:id="@+id/confirmation_continue_button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="متابعة وبدء التنفيذ الفعلي"
+        android:textSize="16sp"
+        android:paddingLeft="24dp"
+        android:paddingRight="24dp"
+        android:paddingTop="12dp"
+        android:paddingBottom="12dp"/>
+
+</LinearLayout>
